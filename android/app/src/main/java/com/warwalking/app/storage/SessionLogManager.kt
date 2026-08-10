@@ -9,6 +9,12 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
+/**
+ * Writes one walk session as a WigleWifi-1.4 CSV in app-private storage.
+ * Owned exclusively by WarWalkingService - the service is the only thing
+ * that knows the exact file a given session produced, so upload and cleanup
+ * live there too rather than being re-derived elsewhere.
+ */
 class SessionLogManager(private val context: Context) {
 
     private var activeFile: File? = null

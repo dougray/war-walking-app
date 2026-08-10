@@ -7,6 +7,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 import java.time.Instant
 
+/** Thin Result-wrapping layer over WarWalkingApiService - no caching, no retry policy. */
 class WarWalkingRepository(private val api: WarWalkingApiService = NetworkClient.apiService) {
 
     suspend fun register(

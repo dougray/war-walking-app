@@ -8,6 +8,12 @@ import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import java.time.Instant
 
+/**
+ * Read-only Health Connect access, queried once per walk. This is the
+ * anti-cheat backstop for the Exploration Index - the live step count shown
+ * during a walk comes from the cheap on-device sensor instead (see
+ * WarWalkingService), so this class is only ever called at session end.
+ */
 class HealthConnectManager(private val context: Context) {
 
     val isAvailable: Boolean
