@@ -1,0 +1,26 @@
+# --- Secrets ---
+.env
+*.jks
+*.keystore
+local.properties
+
+# --- Backend / Python ---
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# --- Android / Gradle ---
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+android/*.iml
+android/captures/
+android/.cxx/
+android/app/release/
+android/app/debug/
+
+# --- OS ---
+.DS_Store
