@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
@@ -83,7 +84,22 @@ private fun WarWalkingApp() {
 
     val runtimePermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
-    ) { /* WarWalkingService checks permissions again defensively before using each API */ }
+    ) { results ->
+        // startForeground(type=location) throws SecurityException if fired before this
+        // grant lands, so the service is only ever started from here or from the
+        // already-granted fast path below - never optimistically alongside the request.
+        val locationGranted = results[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+            results[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        if (locationGranted) {
+            liveSteps = 0
+            liveAPs = 0
+            isWalking = true
+            val intent = Intent(context, WarWalkingService::class.java).setAction(WarWalkingService.ACTION_START)
+            ContextCompat.startForegroundService(context, intent)
+        } else {
+            Toast.makeText(context, "Location permission is required to start a walk.", Toast.LENGTH_LONG).show()
+        }
+    }
 
     DisposableEffect(Unit) {
         val receiver = object : BroadcastReceiver() {
@@ -117,33 +133,42 @@ private fun WarWalkingApp() {
         onDispose { context.unregisterReceiver(receiver) }
     }
 
-    fun requestRuntimePermissions() {
-        val permissions = mutableListOf(
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION,
-        )
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            permissions += Manifest.permission.BLUETOOTH_SCAN
-            permissions += Manifest.permission.BLUETOOTH_CONNECT
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            permissions += Manifest.permission.POST_NOTIFICATIONS
-        }
-        runtimePermissionLauncher.launch(permissions.toTypedArray())
+    fun hasLocationPermission(): Boolean {
+        val fine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
+        val coarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION)
+        return fine == PackageManager.PERMISSION_GRANTED || coarse == PackageManager.PERMISSION_GRANTED
     }
 
     fun startWalk() {
-        requestRuntimePermissions()
+        // Health Connect and Bluetooth/notification prompts are best-effort and don't
+        // gate the walk - only location does, since the service can't legally call
+        // startForeground(type=location) without it.
         coroutineScope.launch {
             if (healthConnectManager.isAvailable && !healthConnectManager.hasPermissions()) {
                 healthPermissionLauncher.launch(healthConnectManager.requiredPermissions)
             }
         }
-        liveSteps = 0
-        liveAPs = 0
-        isWalking = true
-        val intent = Intent(context, WarWalkingService::class.java).setAction(WarWalkingService.ACTION_START)
-        ContextCompat.startForegroundService(context, intent)
+
+        if (hasLocationPermission()) {
+            liveSteps = 0
+            liveAPs = 0
+            isWalking = true
+            val intent = Intent(context, WarWalkingService::class.java).setAction(WarWalkingService.ACTION_START)
+            ContextCompat.startForegroundService(context, intent)
+        } else {
+            val permissions = mutableListOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+            )
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                permissions += Manifest.permission.BLUETOOTH_SCAN
+                permissions += Manifest.permission.BLUETOOTH_CONNECT
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                permissions += Manifest.permission.POST_NOTIFICATIONS
+            }
+            runtimePermissionLauncher.launch(permissions.toTypedArray())
+        }
     }
 
     fun stopWalk() {
