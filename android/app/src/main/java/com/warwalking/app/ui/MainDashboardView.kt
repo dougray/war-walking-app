@@ -31,6 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -112,15 +113,11 @@ fun MainDashboardView(
                     modifier = Modifier.padding(16.dp).fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(
-                        "👟 Live Steps",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    MetricLabel("👟 Live Steps")
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         "$liveSteps",
-                        style = MaterialTheme.typography.headlineMedium,
+                        style = MaterialTheme.typography.headlineLarge,
                         color = MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.ExtraBold
                     )
@@ -136,15 +133,11 @@ fun MainDashboardView(
                     modifier = Modifier.padding(16.dp).fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(
-                        "📡 APs Discovered",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    MetricLabel("📡 APs Discovered")
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         "$liveAPs",
-                        style = MaterialTheme.typography.headlineMedium,
+                        style = MaterialTheme.typography.headlineLarge,
                         fontWeight = FontWeight.ExtraBold,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -165,4 +158,14 @@ fun MainDashboardView(
             )
         }
     }
+}
+
+// bodyMedium's default size (monospace, so wider per character than a sans
+// font) was enough for "APs Discovered" to wrap to two lines in its
+// half-width card while "Live Steps" stayed on one - misaligning the two
+// numbers below them. A smaller single-line label fixes it the same way the
+// bottom nav's labels were fixed.
+@Composable
+private fun MetricLabel(text: String) {
+    Text(text, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
