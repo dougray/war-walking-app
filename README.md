@@ -4,6 +4,10 @@ A gamified wardriving fitness app: scan Wi-Fi/BLE with your phone, verify the wa
 
 This repo was scaffolded from a design conversation (originally drafted with Gemini) covering the architecture, DB schema, FastAPI backend, and Kotlin client. Claude reviewed that draft for correctness before turning it into a real, buildable project — see **Fixes applied** below for what was wrong in the original and why.
 
+## License
+
+Copyright (C) 2026 dougray. Licensed under the [GNU General Public License v3.0 or later](LICENSE) - meaning anyone can use, study, and modify this code, but any distributed derivative work must also be open-sourced under GPL-3.0. This is the only licensing action taken so far; there's no CONTRIBUTING guide or CLA yet.
+
 ## Layout
 
 ```
