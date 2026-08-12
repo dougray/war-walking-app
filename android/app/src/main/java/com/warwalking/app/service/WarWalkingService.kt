@@ -29,6 +29,7 @@ import androidx.core.app.NotificationCompat
 import com.warwalking.app.WigleCredentialStore
 import com.warwalking.app.data.AppDatabase
 import com.warwalking.app.data.WalkSessionEntity
+import com.warwalking.app.data.encodeRoutePoints
 import com.warwalking.app.health.HealthConnectManager
 import com.warwalking.app.network.WigleRepository
 import com.warwalking.app.storage.SessionLogManager
@@ -82,6 +83,7 @@ class WarWalkingService : Service(), SensorEventListener {
     private var stepsAtSessionStart = -1
     private var sessionStartTime: Instant? = null
     private var seenMacs = mutableSetOf<String>()
+    private var routePoints = mutableListOf<Pair<Double, Double>>()
 
     private val wifiScanReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -91,7 +93,10 @@ class WarWalkingService : Service(), SensorEventListener {
         }
     }
 
-    private val locationListener = LocationListener { location -> lastLocation = location }
+    private val locationListener = LocationListener { location ->
+        lastLocation = location
+        routePoints.add(location.latitude to location.longitude)
+    }
 
     private val bleScanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
@@ -133,6 +138,7 @@ class WarWalkingService : Service(), SensorEventListener {
         sessionStartTime = Instant.now()
         stepsAtSessionStart = -1
         seenMacs = mutableSetOf()
+        routePoints = mutableListOf()
         sessionLogManager.startNewSessionFile()
         LiveScanState.clear()
 
@@ -179,6 +185,7 @@ class WarWalkingService : Service(), SensorEventListener {
                     endTime = endTime.toEpochMilli(),
                     stepsCounted = verifiedSteps,
                     apDiscovered = apCount,
+                    routePoints = encodeRoutePoints(routePoints),
                 )
                 sessionEntity = sessionEntity.copy(id = dao.insert(sessionEntity))
 

@@ -5,7 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [WalkSessionEntity::class], version = 1, exportSchema = true)
+@Database(entities = [WalkSessionEntity::class], version = 2, exportSchema = true)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun walkSessionDao(): WalkSessionDao
 
@@ -17,7 +17,12 @@ abstract class AppDatabase : RoomDatabase() {
                 context.applicationContext,
                 AppDatabase::class.java,
                 "warwalker.db"
-            ).build().also { instance = it }
+            )
+                // No real user data to preserve at this stage (pre-release,
+                // test devices only) - a proper Migration should replace this
+                // before shipping anything people would mind losing.
+                .fallbackToDestructiveMigration(true)
+                .build().also { instance = it }
         }
     }
 }
