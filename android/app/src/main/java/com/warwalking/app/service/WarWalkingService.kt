@@ -134,6 +134,7 @@ class WarWalkingService : Service(), SensorEventListener {
         stepsAtSessionStart = -1
         seenMacs = mutableSetOf()
         sessionLogManager.startNewSessionFile()
+        LiveScanState.clear()
 
         acquireWakeLock()
         registerWifiReceiver()
@@ -311,6 +312,9 @@ class WarWalkingService : Service(), SensorEventListener {
                 accuracy = loc?.accuracy ?: 0f,
                 type = "WIFI"
             )
+            LiveScanState.addOrUpdate(
+                LiveScanEntry(result.BSSID, result.SSID, result.level, "WIFI", System.currentTimeMillis())
+            )
         }
         broadcastUiUpdate(apCount = seenMacs.size)
     }
@@ -320,9 +324,10 @@ class WarWalkingService : Service(), SensorEventListener {
         if (!seenMacs.add(mac)) return // BLE advertises far more often than Wi-Fi beacons; de-dupe per session
 
         val loc = lastLocation
+        val deviceName = result.scanRecord?.deviceName ?: ""
         sessionLogManager.logNetworkRow(
             mac = mac,
-            ssid = result.scanRecord?.deviceName ?: "",
+            ssid = deviceName,
             capabilities = "[BLE]",
             channel = 0,
             rssi = result.rssi,
@@ -332,6 +337,7 @@ class WarWalkingService : Service(), SensorEventListener {
             accuracy = loc?.accuracy ?: 0f,
             type = "BLE"
         )
+        LiveScanState.addOrUpdate(LiveScanEntry(mac, deviceName, result.rssi, "BLE", System.currentTimeMillis()))
         broadcastUiUpdate(apCount = seenMacs.size)
     }
 
