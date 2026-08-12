@@ -7,13 +7,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.warwalking.app.ui.theme.WarWalkingTheme
 
 /**
  * Health Connect launches this when the user asks "why does this app want my
@@ -29,7 +29,7 @@ class PermissionsRationaleActivity : ComponentActivity() {
 
 @Composable
 private fun RationaleScreen() {
-    MaterialTheme {
+    WarWalkingTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier.fillMaxSize().padding(24.dp),
@@ -37,7 +37,7 @@ private fun RationaleScreen() {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    "War Walking reads your step count from Health Connect only for the " +
+                    "WarWalker reads your step count from Health Connect only for the " +
                         "duration of an active walking session, to verify that scanned " +
                         "networks were reached on foot rather than by vehicle. Steps are " +
                         "never written back or shared outside your own session score."

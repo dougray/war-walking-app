@@ -236,7 +236,7 @@ class WarWalkingService : Service(), SensorEventListener {
 
     private fun buildNotification(text: String) =
         NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("War Walking Active")
+            .setContentTitle("WarWalker Active")
             .setContentText(text)
             .setSmallIcon(android.R.drawable.ic_dialog_map)
             .setOngoing(true)
@@ -360,7 +360,7 @@ class WarWalkingService : Service(), SensorEventListener {
 
     private fun createNotificationChannel() {
         val channel = NotificationChannel(
-            CHANNEL_ID, "War Walking Engine Channel", NotificationManager.IMPORTANCE_LOW
+            CHANNEL_ID, "WarWalker Engine Channel", NotificationManager.IMPORTANCE_LOW
         )
         (getSystemService(NotificationManager::class.java)).createNotificationChannel(channel)
     }

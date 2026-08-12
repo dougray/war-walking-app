@@ -12,7 +12,7 @@ from app.database import db, lifespan
 
 logger = logging.getLogger("warwalking")
 
-app = FastAPI(title="War Walking Tracker Backend", lifespan=lifespan)
+app = FastAPI(title="WarWalker Tracker Backend", lifespan=lifespan)
 
 
 # --- Pydantic models ---
