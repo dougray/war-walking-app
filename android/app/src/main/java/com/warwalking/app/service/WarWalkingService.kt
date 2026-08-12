@@ -41,7 +41,7 @@ import java.time.Instant
  * Foreground service that owns the full lifecycle of one walking session:
  * start scanning -> keep the radio + GPS alive while the screen is off ->
  * on stop, pull verified steps from Health Connect, sync the session to the
- * homelab backend, then shut itself down. Session file ownership lives here
+ * backend, then shut itself down. Session file ownership lives here
  * (not in the Activity) so there's a single source of truth for "what got
  * scanned this session."
  */

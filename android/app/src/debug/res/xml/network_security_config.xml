@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Debug builds only: permits cleartext HTTP so the app can reach a
-     homelab backend that isn't behind TLS yet. Never ship this in release. -->
+     backend that isn't behind TLS yet. Never ship this in release. -->
 <network-security-config>
     <base-config cleartextTrafficPermitted="true" />
 </network-security-config>
