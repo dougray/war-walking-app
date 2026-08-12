@@ -38,6 +38,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.health.connect.client.PermissionController
 import com.warwalking.app.health.HealthConnectManager
@@ -185,27 +187,27 @@ private fun WarWalkingApp() {
                 NavigationBarItem(
                     selected = selectedTab == 0, onClick = { selectedTab = 0 },
                     icon = { Icon(Icons.Default.Home, contentDescription = "Walk") },
-                    label = { Text("Walk") }
+                    label = { NavLabel("Walk") }
                 )
                 NavigationBarItem(
                     selected = selectedTab == 1, onClick = { selectedTab = 1 },
                     icon = { Icon(Icons.Default.DynamicFeed, contentDescription = "Feed") },
-                    label = { Text("Feed") }
+                    label = { NavLabel("Feed") }
                 )
                 NavigationBarItem(
                     selected = selectedTab == 2, onClick = { selectedTab = 2 },
                     icon = { Icon(Icons.Default.EmojiEvents, contentDescription = "Events") },
-                    label = { Text("Events") }
+                    label = { NavLabel("Events") }
                 )
                 NavigationBarItem(
                     selected = selectedTab == 3, onClick = { selectedTab = 3 },
                     icon = { Icon(Icons.Default.History, contentDescription = "History") },
-                    label = { Text("History") }
+                    label = { NavLabel("History") }
                 )
                 NavigationBarItem(
                     selected = selectedTab == 4, onClick = { selectedTab = 4 },
                     icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
-                    label = { Text("Settings") }
+                    label = { NavLabel("Settings") }
                 )
             }
         }
@@ -231,4 +233,13 @@ private fun WarWalkingApp() {
             }
         }
     }
+}
+
+// Plain Text() here inherits the app-wide monospace typography (Theme.kt),
+// which is meaningfully wider per character than a default sans font - at
+// five tabs across, that was enough for "Settings" to wrap to a second line.
+// A dedicated smaller, single-line style fixes it without giving up labels.
+@Composable
+private fun NavLabel(text: String) {
+    Text(text, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
 }
