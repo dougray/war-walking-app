@@ -12,15 +12,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 /**
- * Event Board and History are specced but not yet backed by real endpoints
- * beyond GET /api/leaderboard - wire these up to
- * GET /api/events/active and a future GET /api/sessions endpoint next.
+ * Event Board (Turf War leaderboards) is specced but not built yet - deferred
+ * in favor of the social feed (FeedScreen.kt) and history (HistoryScreen.kt),
+ * which now have real endpoints behind them. GET /api/events/active already
+ * exists on the backend for whenever this gets picked up.
  */
 @Composable
 fun EventBoardScreen() = PlaceholderScreen("Turf War events land here once a session backlog exists to rank.")
-
-@Composable
-fun HistoryScreen() = PlaceholderScreen("Your completed walks will show up here after your first synced session.")
 
 @Composable
 private fun PlaceholderScreen(message: String) {

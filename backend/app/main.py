@@ -31,6 +31,21 @@ class EventCreate(BaseModel):
     end_time: datetime
 
 
+class SessionUpdate(BaseModel):
+    user_id: int
+    title: str | None = Field(None, max_length=140)
+    is_public: bool | None = None
+
+
+class KudosRequest(BaseModel):
+    user_id: int
+
+
+class CommentCreate(BaseModel):
+    user_id: int
+    body: str = Field(..., min_length=1, max_length=500)
+
+
 # --- Background work ---
 
 async def upload_to_wigle_background(
@@ -134,6 +149,132 @@ async def get_leaderboard():
     async with db.pool.acquire() as conn:
         rows = await conn.fetch("SELECT * FROM leaderboard LIMIT 50;")
         return [dict(row) for row in rows]
+
+
+@app.get("/api/sessions")
+async def get_user_sessions(user_id: int, limit: int = 50, offset: int = 0):
+    """A researcher's own session history, regardless of feed visibility."""
+    limit = min(max(limit, 1), 100)
+    async with db.pool.acquire() as conn:
+        rows = await conn.fetch(
+            """SELECT session_id, title, is_public, start_time, end_time,
+                      steps_counted, ap_discovered, points_earned, wigle_file_id, created_at
+               FROM walk_sessions
+               WHERE user_id = $1
+               ORDER BY created_at DESC
+               LIMIT $2 OFFSET $3;""",
+            user_id, limit, offset,
+        )
+        return [dict(row) for row in rows]
+
+
+@app.patch("/api/sessions/{session_id}")
+async def update_session(session_id: int, update: SessionUpdate):
+    """Set a session's feed caption and/or public visibility. Owner-only."""
+    async with db.pool.acquire() as conn:
+        owner_id = await conn.fetchval("SELECT user_id FROM walk_sessions WHERE session_id = $1", session_id)
+        if owner_id is None:
+            raise HTTPException(status_code=404, detail="Session not found.")
+        if owner_id != update.user_id:
+            raise HTTPException(status_code=403, detail="You can only edit your own sessions.")
+
+        await conn.execute(
+            """UPDATE walk_sessions
+               SET title = COALESCE($1, title), is_public = COALESCE($2, is_public)
+               WHERE session_id = $3;""",
+            update.title, update.is_public, session_id,
+        )
+    return {"status": "updated", "session_id": session_id}
+
+
+# --- Feed & social endpoints ---
+# Deliberately never expose scanned SSIDs/MACs/per-AP coordinates here - only
+# aggregate stats and whatever caption the walker wrote. That data already
+# goes to WiGLE; this is a social layer on top of it, not a second copy of it.
+
+@app.get("/api/feed")
+async def get_feed(viewer_user_id: int | None = None, limit: int = 50, offset: int = 0):
+    limit = min(max(limit, 1), 100)
+    async with db.pool.acquire() as conn:
+        rows = await conn.fetch(
+            """SELECT
+                   s.session_id, s.title, s.start_time, s.end_time,
+                   s.steps_counted, s.ap_discovered, s.points_earned, s.created_at,
+                   u.user_id, u.username,
+                   COALESCE(k.kudos_count, 0) AS kudos_count,
+                   COALESCE(c.comment_count, 0) AS comment_count,
+                   EXISTS(
+                       SELECT 1 FROM kudos vk WHERE vk.session_id = s.session_id AND vk.user_id = $1
+                   ) AS viewer_has_kudos
+               FROM walk_sessions s
+               JOIN users u ON u.user_id = s.user_id
+               LEFT JOIN (SELECT session_id, COUNT(*) AS kudos_count FROM kudos GROUP BY session_id) k
+                   ON k.session_id = s.session_id
+               LEFT JOIN (SELECT session_id, COUNT(*) AS comment_count FROM session_comments GROUP BY session_id) c
+                   ON c.session_id = s.session_id
+               WHERE s.is_public = true
+               ORDER BY s.created_at DESC
+               LIMIT $2 OFFSET $3;""",
+            viewer_user_id, limit, offset,
+        )
+        return [dict(row) for row in rows]
+
+
+@app.post("/api/sessions/{session_id}/kudos", status_code=201)
+async def give_kudos(session_id: int, request: KudosRequest):
+    async with db.pool.acquire() as conn:
+        session_exists = await conn.fetchval(
+            "SELECT EXISTS(SELECT 1 FROM walk_sessions WHERE session_id = $1);", session_id
+        )
+        if not session_exists:
+            raise HTTPException(status_code=404, detail="Session not found.")
+        try:
+            await conn.execute(
+                "INSERT INTO kudos (session_id, user_id) VALUES ($1, $2);",
+                session_id, request.user_id,
+            )
+        except asyncpg.UniqueViolationError:
+            pass  # already given - idempotent from the client's point of view
+        count = await conn.fetchval("SELECT COUNT(*) FROM kudos WHERE session_id = $1;", session_id)
+    return {"status": "ok", "kudos_count": count}
+
+
+@app.delete("/api/sessions/{session_id}/kudos")
+async def remove_kudos(session_id: int, user_id: int):
+    async with db.pool.acquire() as conn:
+        await conn.execute("DELETE FROM kudos WHERE session_id = $1 AND user_id = $2;", session_id, user_id)
+        count = await conn.fetchval("SELECT COUNT(*) FROM kudos WHERE session_id = $1;", session_id)
+    return {"status": "ok", "kudos_count": count}
+
+
+@app.get("/api/sessions/{session_id}/comments")
+async def get_comments(session_id: int):
+    async with db.pool.acquire() as conn:
+        rows = await conn.fetch(
+            """SELECT c.comment_id, c.body, c.created_at, u.user_id, u.username
+               FROM session_comments c
+               JOIN users u ON u.user_id = c.user_id
+               WHERE c.session_id = $1
+               ORDER BY c.created_at ASC;""",
+            session_id,
+        )
+        return [dict(row) for row in rows]
+
+
+@app.post("/api/sessions/{session_id}/comments", status_code=201)
+async def add_comment(session_id: int, comment: CommentCreate):
+    async with db.pool.acquire() as conn:
+        session_exists = await conn.fetchval(
+            "SELECT EXISTS(SELECT 1 FROM walk_sessions WHERE session_id = $1);", session_id
+        )
+        if not session_exists:
+            raise HTTPException(status_code=404, detail="Session not found.")
+        comment_id = await conn.fetchval(
+            """INSERT INTO session_comments (session_id, user_id, body)
+               VALUES ($1, $2, $3) RETURNING comment_id;""",
+            session_id, comment.user_id, comment.body,
+        )
+    return {"status": "created", "comment_id": comment_id}
 
 
 # --- Event endpoints ---

@@ -38,16 +38,21 @@ Swagger UI: `http://<host>:8000/docs`. The `migrations/*.sql` files run automati
 3. Debug builds allow cleartext HTTP to reach an unencrypted homelab server (`app/src/debug/res/xml/network_security_config.xml`); release builds require HTTPS. Put the backend behind TLS (Caddy/nginx + a cert) before shipping a release build.
 4. First sync will need network access to resolve Gradle/AGP/Kotlin plugin versions and the exact Compose BOM patch — Android Studio's dependency-upgrade inspection will flag anything stale (see note below).
 
+## Social feed
+
+Strava-style social layer: a public feed of completed walks (caption + steps/points/AP count, never scanned SSIDs/MACs/coordinates — those stay WiGLE-only), kudos, and comments. Backed by `backend/migrations/003_social.sql` and the `/api/feed`, `/api/sessions*`, `/api/sessions/{id}/kudos`, `/api/sessions/{id}/comments` endpoints; wired into the Android app as the **Feed** and **History** tabs (History is where you set a walk's title and public/private visibility). A spatial "Local Legend" leaderboard (most APs mapped per neighborhood, not just globally) is scoped but not yet built — the next logical follow-up.
+
 ## Known gaps / next steps
 
 - The Settings screen's Wi-Fi/BLE scan toggles are UI-only — `WarWalkingService` currently always scans everything. Wire the toggle state through to the service via intent extras if you want per-radio control.
-- Event Board and History tabs are placeholders. Backend endpoints exist (`GET /api/events/active`, `GET /api/events/{id}/leaderboard`); there's no `GET /api/sessions` list endpoint yet for History.
+- Event Board tab (Turf War time-limited leaderboards) is still a placeholder. Backend endpoints exist (`GET /api/events/active`, `GET /api/events/{id}/leaderboard`).
 - The streak count shown on the dashboard isn't fetched from the backend yet (`user_streaks` table + trigger exist and work — no endpoint exposes it yet).
+- No real auth — every social/session endpoint trusts whatever `user_id` the client sends. Fine for a self-hosted homelab deployment among people you trust; not fine before any real public launch.
 - `TOKEN_ENCRYPTION_KEY` in `.env` is the only thing standing between a DB leak and every researcher's WiGLE token — treat that key like a production secret, not a repo file.
 
 ## Verified
 
-`./gradlew :app:assembleDebug` succeeds end-to-end on this machine (Gradle 9.5.0, AGP 9.3.0, JDK 17 via Android Studio's bundled JBR) and produces a real `app-debug.apk`. `python3 -m py_compile` passes on all backend modules and the `docker-compose.yml` parses as valid YAML. Actually installing/running the app on a device, and standing up the Docker stack against a live Postgres, haven't been done yet.
+`./gradlew :app:assembleDebug` succeeds and produces a real `app-debug.apk` (Gradle 9.5.0, AGP 9.3.0, JDK 17 via Android Studio's bundled JBR). All three migrations were applied against a real local Postgres 16 with zero errors, and the FastAPI app was run against it directly (not mocked) — registration correctly round-trips to the live WiGLE API and rejects bad credentials, and the full feed/kudos/comments/session flow (including ownership checks and idempotent kudos) was exercised end-to-end with `curl`. The app itself has been installed and run on both the Android emulator and a physical device (Moto G Play 2024, Android 14): a real walking session was started, Wi-Fi/BLE scanning captured genuine neighboring networks into a correctly-formatted WigleWifi CSV with real GPS coordinates, and the session stopped cleanly. The Feed/History screens were verified against a real (unreachable, by design in this test) backend host to confirm they fail gracefully rather than crash.
 
 Getting to a green build surfaced one thing no amount of code review would have caught: **AGP 9.0+ bundles Kotlin compilation directly into `com.android.application`** and now rejects the separate `org.jetbrains.kotlin.android` plugin outright, and the old `kotlinOptions { jvmTarget = ... }` DSL block goes with it (jvmTarget now just follows `compileOptions`). `android/build.gradle.kts` and `android/app/build.gradle.kts` are already written for the new model — if you're pattern-matching against older Android tutorials/AI output, expect them to still show the pre-9.0 two-plugin form.
 

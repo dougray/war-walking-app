@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DynamicFeed
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
@@ -42,6 +43,7 @@ import androidx.health.connect.client.PermissionController
 import com.warwalking.app.health.HealthConnectManager
 import com.warwalking.app.service.WarWalkingService
 import com.warwalking.app.ui.EventBoardScreen
+import com.warwalking.app.ui.FeedScreen
 import com.warwalking.app.ui.HistoryScreen
 import com.warwalking.app.ui.MainDashboardView
 import com.warwalking.app.ui.RegisterViewModel
@@ -187,16 +189,21 @@ private fun WarWalkingApp() {
                 )
                 NavigationBarItem(
                     selected = selectedTab == 1, onClick = { selectedTab = 1 },
+                    icon = { Icon(Icons.Default.DynamicFeed, contentDescription = "Feed") },
+                    label = { Text("Feed") }
+                )
+                NavigationBarItem(
+                    selected = selectedTab == 2, onClick = { selectedTab = 2 },
                     icon = { Icon(Icons.Default.EmojiEvents, contentDescription = "Events") },
                     label = { Text("Events") }
                 )
                 NavigationBarItem(
-                    selected = selectedTab == 2, onClick = { selectedTab = 2 },
+                    selected = selectedTab == 3, onClick = { selectedTab = 3 },
                     icon = { Icon(Icons.Default.History, contentDescription = "History") },
                     label = { Text("History") }
                 )
                 NavigationBarItem(
-                    selected = selectedTab == 3, onClick = { selectedTab = 3 },
+                    selected = selectedTab == 4, onClick = { selectedTab = 4 },
                     icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
                     label = { Text("Settings") }
                 )
@@ -213,9 +220,10 @@ private fun WarWalkingApp() {
                     onStartWalk = ::startWalk,
                     onStopWalk = ::stopWalk,
                 )
-                1 -> EventBoardScreen()
-                2 -> HistoryScreen()
-                3 -> SettingsScreen(
+                1 -> FeedScreen()
+                2 -> EventBoardScreen()
+                3 -> HistoryScreen()
+                4 -> SettingsScreen(
                     viewModel = registerViewModel,
                     scanSettings = scanSettings,
                     onScanSettingsChange = { scanSettings = it },
