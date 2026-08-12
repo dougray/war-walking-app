@@ -17,8 +17,24 @@ data class WalkSessionEntity(
     val apDiscovered: Int,
     val title: String? = null,
     val wigleTransId: String? = null, // null until (if ever) the WiGLE upload succeeds
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    // "lat,lon;lat,lon;..." - a location breadcrumb sampled during the walk,
+    // not the per-AP scan coordinates (those only ever live in the transient
+    // WigleWifi CSV). Plain string, not a child table: this is a cheap route
+    // sketch, not a real map, so there's nothing here worth a join over.
+    val routePoints: String? = null
 )
 
 val WalkSessionEntity.pointsEarned: Long
     get() = stepsCounted.toLong() * apDiscovered.toLong()
+
+fun encodeRoutePoints(points: List<Pair<Double, Double>>): String? =
+    points.takeIf { it.isNotEmpty() }?.joinToString(";") { "${it.first},${it.second}" }
+
+fun WalkSessionEntity.decodeRoutePoints(): List<Pair<Double, Double>> =
+    routePoints?.split(";")?.mapNotNull { pair ->
+        val parts = pair.split(",")
+        val lat = parts.getOrNull(0)?.toDoubleOrNull()
+        val lon = parts.getOrNull(1)?.toDoubleOrNull()
+        if (lat != null && lon != null) lat to lon else null
+    } ?: emptyList()
