@@ -22,7 +22,6 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -48,13 +47,14 @@ import com.warwalking.app.ui.MainDashboardView
 import com.warwalking.app.ui.RegisterViewModel
 import com.warwalking.app.ui.ScanSettings
 import com.warwalking.app.ui.SettingsScreen
+import com.warwalking.app.ui.theme.WarWalkingTheme
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MaterialTheme {
+            WarWalkingTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     WarWalkingApp()
                 }

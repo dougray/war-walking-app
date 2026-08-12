@@ -5,6 +5,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -29,7 +30,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -52,6 +52,7 @@ fun MainDashboardView(
     ) {
         Card(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
             modifier = Modifier.fillMaxWidth()
         ) {
             Row(
@@ -66,6 +67,7 @@ fun MainDashboardView(
                     Text(
                         "$currentStreak Days Active",
                         style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -75,9 +77,14 @@ fun MainDashboardView(
         Button(
             onClick = { if (isWalking) onStopWalk() else onStartWalk() },
             shape = CircleShape,
+            // Start is the bold red "go" action; Stop reads as "currently active,
+            // tap to end" - a dark grey fill with a red outline/text, rather than
+            // a second loud red block, so the two states don't fight each other.
             colors = ButtonDefaults.buttonColors(
-                containerColor = if (isWalking) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                containerColor = if (isWalking) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.primary,
+                contentColor = if (isWalking) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onPrimary
             ),
+            border = if (isWalking) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
             modifier = Modifier.size(200.dp)
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -98,27 +105,42 @@ fun MainDashboardView(
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
             Card(
                 modifier = Modifier.weight(1f).padding(end = 8.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp).fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("👟 Live Steps", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+                    Text(
+                        "👟 Live Steps",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("$liveSteps", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold)
+                    Text(
+                        "$liveSteps",
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.ExtraBold
+                    )
                 }
             }
 
             Card(
                 modifier = Modifier.weight(1f).padding(start = 8.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp).fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("📡 APs Discovered", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+                    Text(
+                        "📡 APs Discovered",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         "$liveAPs",

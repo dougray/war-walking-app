@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.WarWalking" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- Compose draws the real (monochrome CRT) theme once content loads; this
+         only covers the brief platform window before that, so it should match
+         Theme.kt's background instead of flashing white on cold start. -->
+    <style name="Theme.WarWalking" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/launcher_background</item>
+        <item name="android:statusBarColor">@color/launcher_background</item>
+        <item name="android:navigationBarColor">@color/launcher_background</item>
+    </style>
 </resources>

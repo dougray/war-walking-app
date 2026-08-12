@@ -1,4 +1,4 @@
-# War Walking
+# WarWalker
 
 A gamified wardriving fitness app: scan Wi-Fi/BLE with your phone, verify the walk with Health Connect step data, upload the session to WiGLE, and compete on a self-hosted leaderboard. Android + Android Wear only.
 
