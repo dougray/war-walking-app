@@ -17,10 +17,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DynamicFeed
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -30,6 +30,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -42,13 +43,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.health.connect.client.PermissionController
+import com.warwalking.app.data.AppDatabase
+import com.warwalking.app.data.StreakCalculator
 import com.warwalking.app.health.HealthConnectManager
 import com.warwalking.app.service.WarWalkingService
+import com.warwalking.app.ui.CredentialViewModel
 import com.warwalking.app.ui.EventBoardScreen
-import com.warwalking.app.ui.FeedScreen
 import com.warwalking.app.ui.HistoryScreen
+import com.warwalking.app.ui.HistoryViewModel
 import com.warwalking.app.ui.MainDashboardView
-import com.warwalking.app.ui.RegisterViewModel
+import com.warwalking.app.ui.ProfileScreen
+import com.warwalking.app.ui.ProfileViewModel
 import com.warwalking.app.ui.ScanSettings
 import com.warwalking.app.ui.SettingsScreen
 import com.warwalking.app.ui.theme.WarWalkingTheme
@@ -72,15 +77,22 @@ private fun WarWalkingApp() {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val healthConnectManager = remember { HealthConnectManager(context.applicationContext) }
-    val registerViewModel = remember { RegisterViewModel() }
+    val credentialViewModel = remember { CredentialViewModel(context.applicationContext) }
+    val historyViewModel = remember { HistoryViewModel(context.applicationContext) }
+    val profileViewModel = remember { ProfileViewModel(context.applicationContext) }
 
     var selectedTab by remember { mutableIntStateOf(0) }
     var isWalking by remember { mutableStateOf(false) }
     var liveSteps by remember { mutableIntStateOf(0) }
     var liveAPs by remember { mutableIntStateOf(0) }
-    // TODO: back with a real streaks endpoint once GET /api/users/{id}/streak exists.
-    var currentStreak by remember { mutableIntStateOf(0) }
     var scanSettings by remember { mutableStateOf(ScanSettings()) }
+
+    // Recomputed from the full local session history on every change - see
+    // StreakCalculator for why that's a correctness improvement over the
+    // incremental version this replaced.
+    val allSessions by remember { AppDatabase.get(context.applicationContext).walkSessionDao().observeAll() }
+        .collectAsState(initial = emptyList())
+    val currentStreak = remember(allSessions) { StreakCalculator.currentStreak(allSessions) }
 
     val healthPermissionLauncher = rememberLauncherForActivityResult(
         PermissionController.createRequestPermissionResultContract()
@@ -191,8 +203,8 @@ private fun WarWalkingApp() {
                 )
                 NavigationBarItem(
                     selected = selectedTab == 1, onClick = { selectedTab = 1 },
-                    icon = { Icon(Icons.Default.DynamicFeed, contentDescription = "Feed") },
-                    label = { NavLabel("Feed") }
+                    icon = { Icon(Icons.Default.Person, contentDescription = "Profile") },
+                    label = { NavLabel("Profile") }
                 )
                 NavigationBarItem(
                     selected = selectedTab == 2, onClick = { selectedTab = 2 },
@@ -222,11 +234,11 @@ private fun WarWalkingApp() {
                     onStartWalk = ::startWalk,
                     onStopWalk = ::stopWalk,
                 )
-                1 -> FeedScreen()
+                1 -> ProfileScreen(profileViewModel)
                 2 -> EventBoardScreen()
-                3 -> HistoryScreen()
+                3 -> HistoryScreen(historyViewModel)
                 4 -> SettingsScreen(
-                    viewModel = registerViewModel,
+                    viewModel = credentialViewModel,
                     scanSettings = scanSettings,
                     onScanSettingsChange = { scanSettings = it },
                 )

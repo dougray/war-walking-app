@@ -1,41 +1,25 @@
 package com.warwalking.app.ui
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.warwalking.app.network.SessionSummary
-import com.warwalking.app.network.WarWalkingRepository
-import kotlinx.coroutines.flow.MutableStateFlow
+import com.warwalking.app.data.AppDatabase
+import com.warwalking.app.data.WalkSessionEntity
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-sealed class HistoryUiState {
-    data object Loading : HistoryUiState()
-    data class Success(val sessions: List<SessionSummary>) : HistoryUiState()
-    data class Error(val message: String) : HistoryUiState()
-}
+/** Reads straight from the on-device Room database - no network involved. */
+class HistoryViewModel(context: Context) : ViewModel() {
+    private val dao = AppDatabase.get(context).walkSessionDao()
 
-class HistoryViewModel(
-    private val repository: WarWalkingRepository = WarWalkingRepository()
-) : ViewModel() {
+    val sessions: StateFlow<List<WalkSessionEntity>> = dao.observeAll()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    private val _uiState = MutableStateFlow<HistoryUiState>(HistoryUiState.Loading)
-    val uiState: StateFlow<HistoryUiState> = _uiState.asStateFlow()
-
-    fun loadSessions(userId: Int) {
+    fun renameSession(session: WalkSessionEntity, newTitle: String?) {
         viewModelScope.launch {
-            _uiState.value = HistoryUiState.Loading
-            repository.getUserSessions(userId)
-                .onSuccess { sessions -> _uiState.value = HistoryUiState.Success(sessions) }
-                .onFailure { e -> _uiState.value = HistoryUiState.Error(e.localizedMessage ?: "Couldn't load your history.") }
-        }
-    }
-
-    fun updateSession(userId: Int, sessionId: Int, title: String?, isPublic: Boolean) {
-        viewModelScope.launch {
-            repository.updateSession(sessionId, userId, title, isPublic).onSuccess {
-                loadSessions(userId)
-            }
+            dao.update(session.copy(title = newTitle))
         }
     }
 }

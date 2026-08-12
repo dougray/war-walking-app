@@ -7,15 +7,15 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
-object NetworkClient {
-
-    // Set per build type in app/build.gradle.kts (defaultConfig.buildConfigField).
-    // Must end with a trailing slash - Retrofit throws IllegalArgumentException otherwise.
-    private val baseUrl: String = BuildConfig.BACKEND_BASE_URL
+object WigleClient {
+    private const val BASE_URL = "https://api.wigle.net/"
 
     private val okHttpClient: OkHttpClient by lazy {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
-            level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY else HttpLoggingInterceptor.Level.NONE
+            // BASIC, not BODY - a session upload's body is the full scanned
+            // network CSV (real SSIDs/coordinates); no reason to also mirror
+            // that into logcat.
+            level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BASIC else HttpLoggingInterceptor.Level.NONE
         }
 
         OkHttpClient.Builder()
@@ -25,12 +25,12 @@ object NetworkClient {
             .build()
     }
 
-    val apiService: WarWalkingApiService by lazy {
+    val apiService: WigleApiService by lazy {
         Retrofit.Builder()
-            .baseUrl(baseUrl)
+            .baseUrl(BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-            .create(WarWalkingApiService::class.java)
+            .create(WigleApiService::class.java)
     }
 }
