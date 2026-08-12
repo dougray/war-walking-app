@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -13,11 +14,6 @@ android {
         targetSdk = 37
         versionCode = 1
         versionName = "0.1.0"
-
-        // Backend base URL. Point this at wherever you're running the FastAPI
-        // server - must end with a trailing slash for Retrofit. Left generic
-        // for now; a real deployment target hasn't been decided yet.
-        buildConfigField("String", "BACKEND_BASE_URL", "\"http://10.0.2.2:8000/\"")
     }
 
     buildTypes {
@@ -47,6 +43,10 @@ android {
     }
 }
 
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 dependencies {
     implementation(libs.core.ktx)
     implementation(libs.lifecycle.runtime.ktx)
@@ -68,4 +68,10 @@ dependencies {
     implementation(libs.retrofit.converter.gson)
     implementation(libs.okhttp.core)
     implementation(libs.okhttp.logging.interceptor)
+
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
+    ksp(libs.room.compiler)
+
+    implementation(libs.security.crypto)
 }

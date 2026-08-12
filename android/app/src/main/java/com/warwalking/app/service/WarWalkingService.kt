@@ -26,9 +26,11 @@ import android.os.Looper
 import android.os.PowerManager
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
-import com.warwalking.app.UserSession
+import com.warwalking.app.WigleCredentialStore
+import com.warwalking.app.data.AppDatabase
+import com.warwalking.app.data.WalkSessionEntity
 import com.warwalking.app.health.HealthConnectManager
-import com.warwalking.app.network.WarWalkingRepository
+import com.warwalking.app.network.WigleRepository
 import com.warwalking.app.storage.SessionLogManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -68,7 +70,7 @@ class WarWalkingService : Service(), SensorEventListener {
     private lateinit var sensorManager: SensorManager
     private lateinit var sessionLogManager: SessionLogManager
     private lateinit var healthConnectManager: HealthConnectManager
-    private val repository = WarWalkingRepository()
+    private val wigleRepository = WigleRepository()
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     private var bluetoothLeScanner: android.bluetooth.le.BluetoothLeScanner? = null
@@ -151,7 +153,7 @@ class WarWalkingService : Service(), SensorEventListener {
         stopBleScan()
         unregisterWifiReceiverIfNeeded()
 
-        startForeground(NOTIFICATION_ID, buildNotification("Syncing session to WiGLE..."))
+        startForeground(NOTIFICATION_ID, buildNotification("Saving session..."))
 
         val apCount = seenMacs.size
         val logFile = sessionLogManager.getFinalSessionFile()
@@ -167,22 +169,34 @@ class WarWalkingService : Service(), SensorEventListener {
                     0
                 }
 
-                val userId = UserSession.getUserId(applicationContext)
+                // The on-device database is the source of truth now, not a backend
+                // account - history/streaks work the same whether or not WiGLE
+                // credentials are configured.
+                val dao = AppDatabase.get(applicationContext).walkSessionDao()
+                var sessionEntity = WalkSessionEntity(
+                    startTime = startTime.toEpochMilli(),
+                    endTime = endTime.toEpochMilli(),
+                    stepsCounted = verifiedSteps,
+                    apDiscovered = apCount,
+                )
+                sessionEntity = sessionEntity.copy(id = dao.insert(sessionEntity))
+
+                val apiName = WigleCredentialStore.getApiName(applicationContext)
+                val apiToken = WigleCredentialStore.getApiToken(applicationContext)
+
                 val resultMessage = when {
-                    userId == null -> "Not registered yet - session kept locally only."
-                    logFile == null || !logFile.exists() -> "No scan data captured this session."
+                    apiName == null || apiToken == null ->
+                        "Saved locally - add your WiGLE API keys in Settings to upload."
+                    logFile == null || !logFile.exists() ->
+                        "Saved locally - no scan data captured this session."
                     else -> {
-                        val result = repository.syncSessionData(
-                            userId = userId,
-                            startTime = startTime,
-                            endTime = endTime,
-                            steps = verifiedSteps,
-                            apsFound = apCount,
-                            logFile = logFile,
-                        )
+                        val result = wigleRepository.uploadSessionFile(apiName, apiToken, logFile)
                         result.fold(
-                            onSuccess = { "Synced: $verifiedSteps steps, $apCount APs." },
-                            onFailure = { "Sync failed: ${it.message}" }
+                            onSuccess = { response ->
+                                dao.update(sessionEntity.copy(wigleTransId = response.transid ?: "UPLOADED"))
+                                "Synced to WiGLE: $verifiedSteps steps, $apCount APs."
+                            },
+                            onFailure = { "Saved locally - WiGLE upload failed: ${it.message}" }
                         )
                     }
                 }

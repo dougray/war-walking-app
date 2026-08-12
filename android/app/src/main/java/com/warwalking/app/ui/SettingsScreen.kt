@@ -14,10 +14,12 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,9 +28,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.compose.runtime.LaunchedEffect
-import com.warwalking.app.UserSession
+import com.warwalking.app.WigleCredentialStore
 
 data class ScanSettings(
     val scan24GHz: Boolean = true,
@@ -38,24 +40,20 @@ data class ScanSettings(
 
 @Composable
 fun SettingsScreen(
-    viewModel: RegisterViewModel,
+    viewModel: CredentialViewModel,
     scanSettings: ScanSettings,
     onScanSettingsChange: (ScanSettings) -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
-    LaunchedEffect(state) {
-        val current = state
-        if (current is RegisterUiState.Success) {
-            UserSession.save(context, current.user.userId)
-        }
-    }
+    var apiName by remember { mutableStateOf(WigleCredentialStore.getApiName(context) ?: "") }
+    var apiToken by remember { mutableStateOf(WigleCredentialStore.getApiToken(context) ?: "") }
+    var signedIn by remember { mutableStateOf(WigleCredentialStore.hasCredentials(context)) }
 
-    var username by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var apiName by remember { mutableStateOf("") }
-    var apiToken by remember { mutableStateOf("") }
+    LaunchedEffect(state) {
+        signedIn = WigleCredentialStore.hasCredentials(context)
+    }
 
     Column(
         modifier = Modifier
@@ -63,19 +61,29 @@ fun SettingsScreen(
             .verticalScroll(rememberScrollState())
             .padding(24.dp)
     ) {
-        Text("Researcher Account", style = MaterialTheme.typography.titleLarge)
+        Text("WiGLE Account", style = MaterialTheme.typography.titleLarge)
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            "Get your API Name and Token from wigle.net -> Account. This is not your website password.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
         Spacer(modifier = Modifier.height(16.dp))
 
-        OutlinedTextField(
-            value = username, onValueChange = { username = it },
-            label = { Text("Username") }, modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        OutlinedTextField(
-            value = email, onValueChange = { email = it },
-            label = { Text("Email") }, modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(8.dp))
+        if (signedIn) {
+            Text(
+                "Signed in${WigleCredentialStore.getUsername(context)?.let { " as $it" } ?: ""}",
+                color = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedButton(onClick = {
+                viewModel.signOut()
+                apiName = ""
+                apiToken = ""
+            }) { Text("Sign Out") }
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
         OutlinedTextField(
             value = apiName, onValueChange = { apiName = it },
             label = { Text("WiGLE API Name") }, modifier = Modifier.fillMaxWidth()
@@ -83,31 +91,33 @@ fun SettingsScreen(
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
             value = apiToken, onValueChange = { apiToken = it },
-            label = { Text("WiGLE API Token") }, modifier = Modifier.fillMaxWidth()
+            label = { Text("WiGLE API Token") },
+            visualTransformation = PasswordVisualTransformation(),
+            modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
-            onClick = { viewModel.performResearcherRegistration(username, email, apiName, apiToken) },
+            onClick = { viewModel.verifyAndSave(apiName, apiToken) },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Register / Verify WiGLE Credentials")
+            Text("Verify & Save")
         }
 
         when (val current = state) {
-            is RegisterUiState.Loading -> {
+            is CredentialUiState.Loading -> {
                 Spacer(modifier = Modifier.height(12.dp))
                 CircularProgressIndicator()
             }
-            is RegisterUiState.Success -> {
+            is CredentialUiState.Success -> {
                 Spacer(modifier = Modifier.height(12.dp))
-                Text("Welcome aboard, ${current.user.username}.", color = MaterialTheme.colorScheme.primary)
+                Text("Credentials verified and saved.", color = MaterialTheme.colorScheme.primary)
             }
-            is RegisterUiState.Error -> {
+            is CredentialUiState.Error -> {
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(current.errorMessage, color = MaterialTheme.colorScheme.error)
             }
-            is RegisterUiState.Idle -> Unit
+            is CredentialUiState.Idle -> Unit
         }
 
         Spacer(modifier = Modifier.height(24.dp))
