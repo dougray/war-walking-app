@@ -248,9 +248,14 @@ class WarWalkingService : Service(), SensorEventListener {
     private fun startLocationUpdates() {
         if (!hasPermission(Manifest.permission.ACCESS_FINE_LOCATION)) return
         for (provider in listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER)) {
-            if (locationManager.isProviderEnabled(provider)) {
-                locationManager.requestLocationUpdates(provider, 5_000L, 5f, locationListener)
+            if (!locationManager.isProviderEnabled(provider)) continue
+            // A live fix can take a while (or never arrive, stationary/indoors), and
+            // requestLocationUpdates' minDistance filter means that silence is normal,
+            // not a bug - seed from any prior fix so early scan rows aren't 0.0,0.0.
+            if (lastLocation == null) {
+                lastLocation = locationManager.getLastKnownLocation(provider)
             }
+            locationManager.requestLocationUpdates(provider, 5_000L, 5f, locationListener)
         }
     }
 
