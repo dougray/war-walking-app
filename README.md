@@ -32,10 +32,10 @@ Swagger UI: `http://<host>:8000/docs`. The `migrations/*.sql` files run automati
 ## Opening the Android app
 
 1. Open `android/` in Android Studio (SDK 37 / build-tools 36.0.0 already detected on this machine; AGP 9.3.0 needs Gradle 9.5.0 + JDK 17, both satisfied here).
-2. In `app/build.gradle.kts`, point `BACKEND_BASE_URL` at your homelab server:
-   - Android **emulator**: `http://10.0.2.2:8000/` (already the default — `10.0.2.2` is the emulator's alias for your host machine).
-   - **Physical phone/watch**: your Proxmox host's real LAN IP, e.g. `http://192.168.1.50:8000/`.
-3. Debug builds allow cleartext HTTP to reach an unencrypted homelab server (`app/src/debug/res/xml/network_security_config.xml`); release builds require HTTPS. Put the backend behind TLS (Caddy/nginx + a cert) before shipping a release build.
+2. In `app/build.gradle.kts`, point `BACKEND_BASE_URL` at wherever you're running the backend:
+   - Android **emulator**: `http://10.0.2.2:8000/` (already the default — `10.0.2.2` is the emulator's fixed alias for your host machine, not a real network address).
+   - **Physical phone/watch**: the server's real address on your network. Not decided/deployed yet — see [Known gaps](#known-gaps--next-steps).
+3. Debug builds allow cleartext HTTP to reach an unencrypted server (`app/src/debug/res/xml/network_security_config.xml`); release builds require HTTPS. Put the backend behind TLS (Caddy/nginx + a cert) before shipping a release build.
 4. First sync will need network access to resolve Gradle/AGP/Kotlin plugin versions and the exact Compose BOM patch — Android Studio's dependency-upgrade inspection will flag anything stale (see note below).
 
 ## Social feed
@@ -47,8 +47,9 @@ Strava-style social layer: a public feed of completed walks (caption + steps/poi
 - The Settings screen's Wi-Fi/BLE scan toggles are UI-only — `WarWalkingService` currently always scans everything. Wire the toggle state through to the service via intent extras if you want per-radio control.
 - Event Board tab (Turf War time-limited leaderboards) is still a placeholder. Backend endpoints exist (`GET /api/events/active`, `GET /api/events/{id}/leaderboard`).
 - The streak count shown on the dashboard isn't fetched from the backend yet (`user_streaks` table + trigger exist and work — no endpoint exposes it yet).
-- No real auth — every social/session endpoint trusts whatever `user_id` the client sends. Fine for a self-hosted homelab deployment among people you trust; not fine before any real public launch.
+- No real auth — every social/session endpoint trusts whatever `user_id` the client sends. Fine for a small deployment among people you trust; not fine before any real public launch.
 - `TOKEN_ENCRYPTION_KEY` in `.env` is the only thing standing between a DB leak and every researcher's WiGLE token — treat that key like a production secret, not a repo file.
+- **Where this actually runs is undecided.** No backend is deployed anywhere right now, and the app isn't pointed at any server. That's deliberate — deployment target is a separate decision to make later, not baked into this code.
 
 ## Verified
 

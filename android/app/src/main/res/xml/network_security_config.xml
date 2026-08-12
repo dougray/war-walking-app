@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Release default: HTTPS only. The debug source set overrides this file to
-     allow cleartext HTTP so you can hit an unencrypted homelab server during dev. -->
+     allow cleartext HTTP so you can hit an unencrypted server during dev. -->
 <network-security-config>
     <base-config cleartextTrafficPermitted="false" />
 </network-security-config>

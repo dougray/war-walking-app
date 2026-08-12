@@ -33,7 +33,7 @@ class RegisterViewModel(
                 _uiState.value = RegisterUiState.Success(response)
             }.onFailure { exception ->
                 _uiState.value = RegisterUiState.Error(
-                    exception.localizedMessage ?: "Unknown connection failure to homelab backend server."
+                    exception.localizedMessage ?: "Unknown connection failure to backend server."
                 )
             }
         }

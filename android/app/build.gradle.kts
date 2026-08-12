@@ -14,8 +14,9 @@ android {
         versionCode = 1
         versionName = "0.1.0"
 
-        // Homelab backend base URL. Point this at your Proxmox/Docker host, e.g.
-        // "http://192.168.1.50:8000/" - must end with a trailing slash for Retrofit.
+        // Backend base URL. Point this at wherever you're running the FastAPI
+        // server - must end with a trailing slash for Retrofit. Left generic
+        // for now; a real deployment target hasn't been decided yet.
         buildConfigField("String", "BACKEND_BASE_URL", "\"http://10.0.2.2:8000/\"")
     }
 
