@@ -1,0 +1,1 @@
+First release. Scan Wi-Fi/BLE on a walk, verify with Health Connect steps, and upload straight to your WiGLE account. No ads, no analytics, no account beyond WiGLE's own.

@@ -1,0 +1,1 @@
+Wardrive on foot: scan Wi-Fi/BLE, verify steps, upload straight to WiGLE.

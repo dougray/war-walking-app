@@ -1,0 +1,27 @@
+WarWalker turns wardriving into a walking habit: scan nearby Wi-Fi and Bluetooth networks as you go, verify the walk really happened with your phone's step data, and upload the result straight to WiGLE — the crowdsourced wireless-network mapping project.
+
+HOW IT WORKS
+
+• Tap Start Walk. WarWalker scans Wi-Fi and BLE in the background via a visible foreground-service notification, geotagging every network it sees.
+• Your phone's step sensor tracks live steps during the walk, shown right on the dashboard.
+• Stop the walk and WarWalker checks your step count against Health Connect as an anti-cheat measure, then builds a standard WigleWifi CSV and uploads it directly to your WiGLE account.
+• Earn points (steps × access points discovered), build a daily streak, and watch your real WiGLE rank on the Profile tab.
+
+REQUIRES A WIGLE ACCOUNT
+
+WarWalker is a client for WiGLE, not a replacement for it. You'll need a free WiGLE account and its API credentials (separate from your website password — grab them from your Account page at wigle.net) to upload scans and see your stats. There is no separate WarWalker account and no WarWalker server in between: the app talks to api.wigle.net directly, over HTTPS, using your credentials.
+
+PRIVATE BY DESIGN
+
+• No ads, no analytics, no crash-reporting SDKs, no tracking of any kind.
+• Your WiGLE credentials are encrypted on-device and never leave your phone except as the auth header on your own upload requests.
+• Walk history, streaks, and stats live in a local database on your phone — WarWalker doesn't run a backend and can't see your data.
+• Full source available under the GPL-3.0 license.
+
+WHAT'S NOT HERE YET
+
+WarWalker is an early release. Time-limited community events ("Turf War") and neighborhood-level leaderboards are on the roadmap but not built yet — this release focuses on the core wardrive-and-verify loop.
+
+PERMISSIONS
+
+Location, Wi-Fi, and Bluetooth scanning permissions are used only while a walk is actively running (no background location access). Health Connect access is read-only and used once per walk, purely to verify your step count.
