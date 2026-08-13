@@ -1,0 +1,61 @@
+# Draft F-Droid build recipe for WarWalker.
+#
+# This is NOT submitted anywhere yet. To actually publish on F-Droid:
+#   1. Tag a release commit in this repo (e.g. `git tag v1.0.0 && git push --tags`)
+#      and fill in the CommitFromTag values below.
+#   2. Fork https://gitlab.com/fdroid/fdroiddata
+#   3. Add this file (renamed without the leading path) as
+#      metadata/com.warwalking.app.yml in that fork.
+#   4. Open a merge request. F-Droid's own reviewers will check the build
+#      recipe and re-verify the antifeature/licensing notes below - treat
+#      what's here as a starting draft, not something guaranteed to be
+#      accepted as-is.
+#
+# Before submitting, read https://f-droid.org/docs/Submitting_to_F-Droid_Quick_Start_Guide/
+# and search https://gitlab.com/fdroid/fdroiddata/-/issues for any prior
+# discussion of WiGLE-dependent apps - the antifeature call below is a
+# reasonable first guess, not a verified precedent.
+
+Categories:
+  - Connectivity
+  - Sports & Health
+License: GPL-3.0-or-later
+AuthorName: dougray
+SourceCode: https://github.com/dougray/war-walking-app
+IssueTracker: https://github.com/dougray/war-walking-app/issues
+Changelog: https://github.com/dougray/war-walking-app/blob/main/fastlane/metadata/android/en-US/changelogs/%v.txt
+
+# WarWalker's entire purpose is uploading scans to WiGLE, and reading your
+# rank back from WiGLE's stats API - the app is non-functional without a
+# WiGLE account. WiGLE's API/ToS impose usage restrictions (rate limits,
+# reuse terms) that are not a free-license grant, which is the shape of
+# thing F-Droid's NonFreeNet antifeature exists for. Flagging this now
+# rather than letting a reviewer discover it - but whether it actually
+# applies (and how F-Droid wants it described) should be confirmed against
+# current inclusion policy at submission time, not assumed from this note.
+AntiFeatures:
+  - NonFreeNet
+
+# All dependencies resolve from google() and mavenCentral() only (see
+# android/settings.gradle.kts) - no JitPack, no vendor-specific repos, no
+# prebuilt AARs checked into the repo. Confirmed buildable offline once
+# Gradle's dependency cache is warm.
+RepoType: git
+Repo: https://github.com/dougray/war-walking-app.git
+
+Builds:
+  - versionName: '1.0.0'
+    versionCode: 1
+    commit: v1.0.0  # tag not yet created - see step 1 above
+    subdir: android
+    gradle:
+      - yes
+    output: app/build/outputs/apk/release/app-release-unsigned.apk
+    # F-Droid signs with its own key - the keystore in this repo's
+    # (gitignored) android/keystore.properties is only used for direct/
+    # sideloaded and Play Store builds, never for the F-Droid build itself.
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: '1.0.0'
+CurrentVersionCode: 1
