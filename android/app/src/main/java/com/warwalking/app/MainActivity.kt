@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
@@ -48,7 +47,6 @@ import com.warwalking.app.data.StreakCalculator
 import com.warwalking.app.health.HealthConnectManager
 import com.warwalking.app.service.WarWalkingService
 import com.warwalking.app.ui.CredentialViewModel
-import com.warwalking.app.ui.EventBoardScreen
 import com.warwalking.app.ui.HistoryScreen
 import com.warwalking.app.ui.HistoryViewModel
 import com.warwalking.app.ui.MainDashboardView
@@ -208,16 +206,11 @@ private fun WarWalkingApp() {
                 )
                 NavigationBarItem(
                     selected = selectedTab == 2, onClick = { selectedTab = 2 },
-                    icon = { Icon(Icons.Default.EmojiEvents, contentDescription = "Events") },
-                    label = { NavLabel("Events") }
-                )
-                NavigationBarItem(
-                    selected = selectedTab == 3, onClick = { selectedTab = 3 },
                     icon = { Icon(Icons.Default.History, contentDescription = "History") },
                     label = { NavLabel("History") }
                 )
                 NavigationBarItem(
-                    selected = selectedTab == 4, onClick = { selectedTab = 4 },
+                    selected = selectedTab == 3, onClick = { selectedTab = 3 },
                     icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
                     label = { NavLabel("Settings") }
                 )
@@ -235,9 +228,8 @@ private fun WarWalkingApp() {
                     onStopWalk = ::stopWalk,
                 )
                 1 -> ProfileScreen(profileViewModel)
-                2 -> EventBoardScreen()
-                3 -> HistoryScreen(historyViewModel)
-                4 -> SettingsScreen(
+                2 -> HistoryScreen(historyViewModel)
+                3 -> SettingsScreen(
                     viewModel = credentialViewModel,
                     scanSettings = scanSettings,
                     onScanSettingsChange = { scanSettings = it },
