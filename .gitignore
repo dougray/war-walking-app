@@ -3,6 +3,7 @@
 *.jks
 *.keystore
 local.properties
+android/keystore.properties
 
 # --- Backend / Python ---
 __pycache__/
