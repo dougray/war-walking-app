@@ -18,6 +18,11 @@ val keystoreProperties = Properties().apply {
 }
 
 android {
+    // Lint issues that existed when CI started are recorded here and
+    // tolerated; any new one fails the build. Shrink the file, don't grow it.
+    lint {
+        baseline = file("lint-baseline.xml")
+    }
     namespace = "com.warwalking.app"
     compileSdk = 37
 
