@@ -6,7 +6,7 @@ This repo was scaffolded from a design conversation (originally drafted with Gem
 
 ## License
 
-Copyright (C) 2026 dougray. Licensed under the [GNU General Public License v3.0 or later](LICENSE) - meaning anyone can use, study, and modify this code, but any distributed derivative work must also be open-sourced under GPL-3.0. This is the only licensing action taken so far; there's no CONTRIBUTING guide or CLA yet.
+Copyright 2026 dougray. Licensed under the [Apache License 2.0](LICENSE): anyone can use, study, modify and redistribute this code, including in closed products, with an explicit patent grant. There is no CONTRIBUTING guide or CLA yet.
 
 ## Architecture
 
