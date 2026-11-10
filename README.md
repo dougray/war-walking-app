@@ -18,7 +18,6 @@ The app talks to **WiGLE's API directly** - there is no backend server required 
 - **Everything WiGLE doesn't track** - steps, session scoring, streaks, and day-by-day history for charting - lives entirely on-device in a Room database (`data/`). WiGLE's stats API only gives you *current totals* and *this month vs. last month*, not a full history, so the "Last 7 Days" chart on the Profile tab is built from local data, not WiGLE's.
 
 ```
-backend/            FastAPI + PostgreSQL - optional, not required to use the app (see below)
 android/            Native Kotlin app (Jetpack Compose, Health Connect, Room, Retrofit)
 ```
 
@@ -40,27 +39,13 @@ Log into [wigle.net](https://wigle.net) normally, then go to your **Account** pa
 - No live view of currently-detected networks during a walk (like WiGLE's own app) - planned next: move Start Walk to the top of the dashboard and show the live scan list in the middle.
 - A spatial "Local Legend" leaderboard (most APs mapped per neighborhood, not just globally) was scoped during the social-feed phase but never built, and doesn't fit the current architecture as-is (WiGLE's API doesn't expose per-neighborhood breakdowns) - would need rethinking, not just resuming.
 
-## Optional: self-hosted backend (not required)
+## Earlier backend (removed)
 
-`backend/` is a fully working, independently-verified FastAPI + Postgres stack from an earlier design that routed registration, session sync, and a social feed (kudos/comments/leaderboard) through a self-hosted server instead of talking to WiGLE directly. It's kept in the repo because it's real, tested code that could be revived later if a social layer beyond WiGLE's own stats becomes worth building again - but the Android app no longer calls it for anything, and standing it up is not part of getting the app working.
-
-If you want to explore it anyway:
-
-```bash
-cd backend
-cp .env.example .env
-python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
-# paste that key into .env as TOKEN_ENCRYPTION_KEY, and set a real POSTGRES_PASSWORD
-docker compose up -d --build
-```
-
-Swagger UI: `http://<host>:8000/docs`.
+An earlier design routed registration, session sync and a social feed through a self-hosted FastAPI + Postgres server. The app stopped calling it after the WiGLE-direct pivot, and it had no authentication of its own, so it was removed in November 2026 rather than left in the repo to be revived by accident. It is in git history if a social layer is ever rebuilt; that rebuild needs real authentication first.
 
 ## Verified
 
 **WiGLE-direct pivot** (current architecture): the full rewrite - Room database, encrypted credential storage, direct WiGLE API calls, Profile/History/Settings screens - compiled clean on the first `assembleDebug` attempt. Installed and exercised live on the physical test device (Moto G Play 2024, Android 14): started a real walk, captured genuine neighboring Wi-Fi networks, stopped the session, and confirmed - all with zero backend running anywhere - that the session persisted to the local database, the streak correctly advanced to "1 Days Active" (computed live from that local data), the session appeared reactively in History, the rename dialog worked, and the Profile tab's not-signed-in state and local 7-day chart both rendered correctly with no crashes.
-
-**Backend** (now optional, `backend/`): `./gradlew :app:assembleDebug` history aside, the FastAPI stack was independently validated earlier - all three migrations applied against a real local Postgres 16 with zero errors, and the app was run against it directly (not mocked): registration correctly round-tripped to the live WiGLE API and rejected bad credentials, and the full feed/kudos/comments/session flow (including ownership checks and idempotent kudos) was exercised end-to-end with `curl`.
 
 Getting to a green build surfaced one thing no amount of code review would have caught: **AGP 9.0+ bundles Kotlin compilation directly into `com.android.application`** and now rejects the separate `org.jetbrains.kotlin.android` plugin outright, and the old `kotlinOptions { jvmTarget = ... }` DSL block goes with it (jvmTarget now just follows `compileOptions`). `android/build.gradle.kts` and `android/app/build.gradle.kts` are already written for the new model — if you're pattern-matching against older Android tutorials/AI output, expect them to still show the pre-9.0 two-plugin form.
 
